@@ -1,4 +1,4 @@
-import { defineNuxtModule, addServerMiddleware, addPlugin } from '@nuxt/kit'
+import { defineNuxtModule, addServerMiddleware } from '@nuxt/kit'
 import { resolve } from 'upath'
 export default defineNuxtModule({
   name: 'content',
@@ -6,6 +6,11 @@ export default defineNuxtModule({
     dir: 'content'
   },
   setup (options, nuxt) {
+    // Only expose to server middleware/api
+    nuxt.options.privateRuntimeConfig.content = {
+      ...options
+    }
+
     nuxt.hook('nitro:context', (ctx) => {
       ctx.storage.mounts.content = {
         // Prod TODO: unstorage driver for nitro assets

@@ -1,6 +1,7 @@
 import { createError } from 'h3'
 import transformMarkdown from './transformers/markdown'
 import { storage } from '#storage'
+// import config from '#config'
 
 const transformers = {
   default: (body = '') => ({ body, meta: {} }),

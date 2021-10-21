@@ -16,12 +16,12 @@
     "test": "yarn lint"
   },
   "dependencies": {
-    "@nuxt/kit": "^0.6.1",
+    "@nuxt/kit": "^0.6.2",
     "defu": "^5.0.0",
     "upath": "^2.0.1"
   },
   "devDependencies": {
-    "@nuxt/nitro": "^0.7.1",
+    "@nuxt/nitro": "^0.8.0",
     "@nuxtjs/eslint-config-typescript": "^6.0.0",
     "eslint": "^7.22.0",
     "gray-matter": "^4.0.3",

@@ -68,6 +68,15 @@ const authors = await this.$content.findAround('authors', { where: { age: '>28' 
 
 // with composition API
 const { content: settings, pending, error } = useContent('setting.json', { only: ['title'] })
+
+// 1. Get by slug
+// 2. Get all keys + meta [caching p1/p2] cache as index
+// 3. (query api) [indexing p2/p1]
+
+
+API:
+/fetch(id) [done] [meta only]
+/search(ns) [todo]
 ```
 
 Current @nuxt/content is merging metadata and file body.
@@ -135,3 +144,21 @@ Map: namespace to array of meta and store
 [npm-downloads-href]: https://npmjs.com/package/@nuxt/content
 [license-src]: https://flat.badgen.net/github/license/nuxt/data
 [license-href]: https://npmjs.com/package/@nuxt/content
+
+
+
+```bash
+content/
+  .src/ # not parsed
+  _videos/ # not parsed?
+    vueschool.yml
+    masteringnuxt.yml
+  settings.json
+
+Keys:
+videos/vueschool.yml (ignored as a page)
+...
+
+```
+
+$content.findAll('_videos', { only: ['metadata'] })

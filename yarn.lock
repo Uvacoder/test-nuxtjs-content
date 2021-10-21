@@ -1152,10 +1152,10 @@
     node-html-parser "^3.2.0"
     ufo "^0.7.4"
 
-"@nuxt/kit@^0.6.1":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@nuxt/kit/-/kit-0.6.1.tgz#26ee5f5c6d1bbcbcb2ef24bb8f86bf5b2a2d3ad6"
-  integrity sha512-Dm6WTmY2UqhC5kHLK18JfQookFmPegaNW/brEbZMu8yanpvONMzAHqKmLggQwKg9L8IEaoadbyoMGJeZTKhLFg==
+"@nuxt/kit@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@nuxt/kit/-/kit-0.6.2.tgz#f6747c6b215a6e5cb174cc5b503b6c423e3d35bf"
+  integrity sha512-hiCG3Tfa2pE9QAEZBtuoXvG78JcU1BlbXGq6N2Uodpd8cIow6v9vZfKWciHe5NwlBEWZcQ9eVmYq1R4ukSNT9w==
   dependencies:
     consola "^2.15.3"
     create-require "^1.1.1"
@@ -1183,15 +1183,15 @@
     node-res "^5.0.1"
     serve-static "^1.14.1"
 
-"@nuxt/nitro@^0.7.1":
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/@nuxt/nitro/-/nitro-0.7.1.tgz#4398cc0cd50ccad5c75d047dc01911d41277ba61"
-  integrity sha512-0RrB7Nz/pWjd/K9J4PlHl1bDL0eoVF+ueqDe9WLG36+KvSLXQwlmNPWgBEtkCh0nc3YOYNbFlC0Qad7whRoLaw==
+"@nuxt/nitro@^0.8.0":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@nuxt/nitro/-/nitro-0.8.0.tgz#85f02f793fbeba996c1d8d31639839cce277e5cb"
+  integrity sha512-7mLvIswdImh2or0i/Zbw4gELJJHK4UAdmPrKGGEUxy8AzrQmmwLcsnDmaR40Ek+ZLdZisRoRPMn/HQ0Zzcl4Ww==
   dependencies:
     "@cloudflare/kv-asset-handler" "^0.1.1"
     "@netlify/functions" "^0.7.2"
     "@nuxt/devalue" "^1.2.5"
-    "@nuxt/kit" "^0.6.1"
+    "@nuxt/kit" "^0.6.2"
     "@rollup/plugin-alias" "^3.1.2"
     "@rollup/plugin-commonjs" "^19.0.0"
     "@rollup/plugin-inject" "^4.0.2"

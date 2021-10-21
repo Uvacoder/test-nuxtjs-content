@@ -5,7 +5,7 @@ import remark2rehype from 'remark-rehype'
 import rehypeStringify from 'rehype-stringify'
 import rehypeRaw from 'rehype-raw'
 
-export default async function transformMarkdown (input: string) {
+export default async function transformMarkdown (input: string, opts: { metaOnly }) {
   const markdown = unified()
     .use(remarkParse)
     .use(remark2rehype)
