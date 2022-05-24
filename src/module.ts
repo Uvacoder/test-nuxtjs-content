@@ -393,6 +393,8 @@ export default defineNuxtModule<ModuleOptions>({
       // Tags will use in markdown renderer for component replacement
       tags: contentContext.markdown.tags as any,
       highlight: options.highlight as any,
+      locales: options.locales,
+      defaultLocale: contentContext.defaultLocale,
       wsUrl: ''
     })
     // Context will use in server
