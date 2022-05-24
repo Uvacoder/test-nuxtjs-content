@@ -1,6 +1,7 @@
 
 import { PropType, defineComponent, h, useSlots } from 'vue'
 import type { QueryBuilderParams } from '../types'
+import { useLocaleRoute } from '../composables/utils'
 import ContentQuery from './ContentQuery'
 
 export default defineComponent({
@@ -29,13 +30,15 @@ export default defineComponent({
     }
   },
   render (ctx) {
+    const route = useLocaleRoute()
     const slots = useSlots()
+    const { query } = ctx
 
-    const { path, query } = ctx
-
-    // Merge local `path` props and apply `findOne` query default.
-    const contentQueryProps = Object.assign(query || {}, { path })
-
+    // Merge local `path` props and apply query default.
+    const contentQueryProps = Object.assign(query || {}, {
+      path: ctx.path ? ctx.path : route.value.path,
+      locale: ctx.path ? query?.locale : route.value.locale
+    })
     const emptyNode = (slot: string, data: any) => h('pre', null, JSON.stringify({ message: 'You should use slots with <ContentList>', slot, data }, null, 2))
 
     return h(

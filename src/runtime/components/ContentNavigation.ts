@@ -1,7 +1,8 @@
 import { PropType, toRefs, defineComponent, h, useSlots } from 'vue'
 import { hash } from 'ohash'
 import type { NavItem, QueryBuilderParams } from '../types'
-import { useAsyncData, fetchContentNavigation, queryContent, useLocaleRoute } from '#imports'
+import { useLocaleRoute } from '../composables/utils'
+import { useAsyncData, fetchContentNavigation, queryContent } from '#imports'
 
 export default defineComponent({
   props: {
