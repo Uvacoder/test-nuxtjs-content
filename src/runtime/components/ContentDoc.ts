@@ -1,9 +1,10 @@
 
 import { PropType, defineComponent, h, useSlots, nextTick } from 'vue'
 import type { QueryBuilderParams } from '../types'
+import { useLocaleRoute } from '../composables/locale'
 import ContentRenderer from './ContentRenderer'
 import ContentQuery from './ContentQuery'
-import { useRoute, useHead } from '#imports'
+import { useHead } from '#imports'
 
 export default defineComponent({
   props: {
@@ -41,7 +42,7 @@ export default defineComponent({
     path: {
       type: String,
       required: false,
-      default: () => useRoute().path
+      default: undefined
     },
 
     /**
@@ -54,17 +55,22 @@ export default defineComponent({
     }
   },
   render (ctx) {
+    const route = useLocaleRoute()
     const slots = useSlots()
-
-    const { tag, excerpt, path, query } = ctx
+    const { tag, excerpt, query } = ctx
+    const path = ctx.path ? { path: ctx.path } : route.value.path
 
     // Merge local `path` props and apply `findOne` query default.
-    const contentQueryProps = Object.assign(query || {}, { path, find: 'one' })
+    const contentQueryProps = Object.assign(query || {}, {
+      path,
+      locale: ctx.path ? query.locale : route.value.locale,
+      find: 'one'
+    })
 
     const emptyNode = (slot: string, data: any) => h('pre', null, JSON.stringify({ message: 'You should use slots with <ContentDoc>', slot, data }, null, 2))
 
     const addHead = (doc: any) => {
-      if (path !== useRoute().path) { return }
+      if (path !== route.value.path) { return }
       const head = Object.assign({}, doc.head)
       head.title = head.title || doc.title
       head.meta = head.meta || []

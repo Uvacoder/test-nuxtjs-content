@@ -1,7 +1,7 @@
 import { PropType, toRefs, defineComponent, h, useSlots } from 'vue'
 import { hash } from 'ohash'
 import type { NavItem, QueryBuilderParams } from '../types'
-import { useAsyncData, fetchContentNavigation } from '#imports'
+import { useAsyncData, fetchContentNavigation, queryContent, useLocaleRoute } from '#imports'
 
 export default defineComponent({
   props: {
@@ -18,10 +18,15 @@ export default defineComponent({
     const {
       query
     } = toRefs(props)
+    const route = useLocaleRoute()
+
+    // TODO: check for custom locale
+    const builder = queryContent(query.value || {})
+    builder.locale(route.value.locale)
 
     const { data, refresh } = await useAsyncData<NavItem[]>(
-      `content-navigation-${hash(query.value)}`,
-      () => fetchContentNavigation(query.value)
+      `content-navigation-${hash(builder.params())}`,
+      () => fetchContentNavigation(builder)
     )
 
     return {

@@ -289,7 +289,8 @@ export default defineNuxtModule<ModuleOptions>({
     addAutoImport([
       { name: 'queryContent', as: 'queryContent', from: resolveRuntimeModule('./composables/query') },
       { name: 'withContentBase', as: 'withContentBase', from: resolveRuntimeModule('./composables/utils') },
-      { name: 'useUnwrap', as: 'useUnwrap', from: resolveRuntimeModule('./composables/utils') }
+      { name: 'useUnwrap', as: 'useUnwrap', from: resolveRuntimeModule('./composables/utils') },
+      { name: 'useLocaleRoute', as: 'useLocaleRoute', from: resolveRuntimeModule('./composables/locale') }
     ])
 
     // Register components
