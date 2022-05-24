@@ -16,15 +16,23 @@ export default defineNuxtConfig({
   rootDir: __dirname,
   modules: [contentModule, '@nuxthq/admin'],
   content: {
+    defaultLocale: 'en',
+    locales: ['en', 'fa', 'fr'],
     navigation: {
       fields: ['icon']
     },
     sources: [
       {
-        name: 'translation-fa',
+        name: 'content-fa',
         prefix: '/fa',
         driver: 'fs',
         base: resolve(__dirname, 'content-fa')
+      },
+      {
+        name: 'content-fr',
+        prefix: '/fr',
+        driver: 'fs',
+        base: resolve(__dirname, 'content-fr')
       }
     ],
     highlight: {
