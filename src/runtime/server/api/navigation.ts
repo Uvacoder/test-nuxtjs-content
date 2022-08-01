@@ -6,7 +6,22 @@ import { getContentQuery } from '../../utils/query'
 
 export default defineEventHandler(async (event) => {
   const query = getContentQuery(event)
-
+  // @ts-ignore
+  const pref: any = event.pref = {
+    tick: (name) => {
+      pref[name] = process?.hrtime ? process.hrtime.bigint() : Date.now()
+    },
+    table: (title) => {
+      console.log(title)
+      console.table({
+        total: (pref.end - pref.start),
+        list: (pref.getListEnd - pref.getListStart),
+        parse: (pref.parseListEnd - pref.parseListStart),
+        query: (pref.end - pref.parseListEnd)
+      })
+    }
+  }
+  pref.tick('start')
   const contents = await serverQueryContent(event, query)
     .where({
       /**
@@ -22,6 +37,9 @@ export default defineEventHandler(async (event) => {
       }
     })
     .find()
+  pref.tick('end')
+
+  pref.table('[Navigation] ' + JSON.stringify(query))
 
   const dirConfigs = await serverQueryContent(event).where({ _path: /\/_dir$/i, _partial: true }).find()
 

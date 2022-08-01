@@ -103,9 +103,18 @@ export const getContentsIds = async (event: CompatibilityEvent, prefix?: string)
 }
 
 export const getContentsList = async (event: CompatibilityEvent, prefix?: string) => {
-  const keys = await getContentsIds(event, prefix)
-  const contents = await Promise.all(keys.map(key => getContent(event, key)))
+  // @ts-ignore
+  event.pref?.tick?.('getListStart')
 
+  const keys = await getContentsIds(event, prefix)
+  // @ts-ignore
+  event.pref?.tick?.('getListEnd')
+  // @ts-ignore
+  event.pref?.tick?.('parseListStart')
+
+  const contents = await Promise.all(keys.map(key => getContent(event, key)))
+  // @ts-ignore
+  event.pref?.tick?.('parseListEnd')
   return contents
 }
 
