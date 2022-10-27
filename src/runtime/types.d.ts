@@ -409,6 +409,10 @@ export interface QueryBuilderWhere extends Partial<Record<keyof ParsedContentInt
 }
 
 export interface QueryBuilderParams {
+  action?: 'find' | 'findOne' | 'count'
+  /**
+   * @deprecated Use `action` instead
+   */
   first?: boolean
   skip?: number
   limit?: number
@@ -467,6 +471,11 @@ export interface QueryBuilder<T = ParsedContentMeta> {
    * Fetch first matched content
    */
   findOne(): Promise<T>
+
+  /**
+   * Fetch count of matched contents
+   */
+  count(): Promise<number>
 
   /**
    * Fetch sorround contents

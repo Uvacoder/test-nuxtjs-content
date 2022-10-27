@@ -37,7 +37,16 @@ export function createPipelineFetcher<T> (getContentsList: () => Promise<T[]>) {
     // Select only wanted fields
     (data, params) => apply(withKeys(params.only))(data),
     // Evaluate result
-    (data, params) => params.first ? data[0] : data
+    (data, params) => {
+      switch (params.action) {
+        case 'count':
+          return data.length
+        case 'findOne':
+          return data[0]
+        default:
+          return data
+      }
+    }
   ]
 
   return async (query: QueryBuilder<T>): Promise<T | T[]> => {

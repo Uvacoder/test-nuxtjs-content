@@ -189,7 +189,7 @@ export async function parseContent (id: string, content: string, opts: ParseCont
 
 export const createServerQueryFetch = <T = ParsedContent>(event: CompatibilityEvent, path?: string) => (query: QueryBuilder<T>) => {
   if (path) {
-    if (query.params().first) {
+    if (query.params().action === 'findOne') {
       query.where({ _path: withoutTrailingSlash(path) })
     } else {
       query.where({ _path: new RegExp(`^${path.replace(/[-[\]{}()*+.,^$\s/]/g, '\\$&')}`) })

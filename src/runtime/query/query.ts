@@ -39,8 +39,12 @@ export const createQuery = <T = ParsedContent>(
     // find
     find: () => fetcher(query) as Promise<Array<T>>,
     findOne: () => {
-      queryParams.first = true
+      queryParams.action = 'findOne'
       return fetcher(query) as Promise<T>
+    },
+    count: () => {
+      queryParams.action = 'count'
+      return fetcher(query) as any as Promise<number>
     },
     findSurround: (surroundQuery, options) => {
       queryParams.surround = { query: surroundQuery, ...options }

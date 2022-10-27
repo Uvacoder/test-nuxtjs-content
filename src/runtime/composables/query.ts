@@ -11,7 +11,7 @@ import { addPrerenderPath, shouldUseClientDB, withContentBase } from './utils'
  */
 export const createQueryFetch = <T = ParsedContent>(path?: string) => async (query: QueryBuilder<T>) => {
   if (path) {
-    if (query.params().first && (query.params().where || []).length === 0) {
+    if (query.params().action === 'findOne' && (query.params().where || []).length === 0) {
       // If query contains `path` and does not contain any `where` condition
       // Then can use `path` as `where` condition to find exact match
       query.where({ _path: withoutTrailingSlash(path) })

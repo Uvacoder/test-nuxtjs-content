@@ -270,4 +270,13 @@ describe('Database Provider', () => {
       expect(item._deleted).toBeUndefined()
     })
   })
+
+  test('Count contents', async () => {
+    const query = createQuery(pipelineFetcher)
+      .where({ id: { $in: [1, 2] } })
+      .without(['name', '_'])
+    const result = await query.count()
+
+    expect(result).toBe(2)
+  })
 })

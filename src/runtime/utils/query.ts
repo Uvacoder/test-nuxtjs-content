@@ -17,7 +17,7 @@ export const getContentQuery = (event: CompatibilityEvent): QueryBuilderParams =
 
   // Using /api/_content/query/:qid?_params=....
   if (qid && query._params) {
-    memory[qid] = parseQueryParams(query._params)
+    memory[qid] = refineQuery(parseQueryParams(query._params))
 
     return memory[qid]
   }
@@ -27,7 +27,7 @@ export const getContentQuery = (event: CompatibilityEvent): QueryBuilderParams =
 
   // Using /api/_content/query?_params={{JSON_FORMAT}}
   if (query._params) {
-    return parseQueryParams(query._params)
+    return refineQuery(parseQueryParams(query._params))
   }
 
   // Using /api/_content/query?path=...&only=...
@@ -49,11 +49,6 @@ export const getContentQuery = (event: CompatibilityEvent): QueryBuilderParams =
       delete query[key]
     }
   }
-  if (Object.keys(where).length > 0) {
-    query.where = [where]
-  } else {
-    delete query.where
-  }
 
   // ?sortyBy=size:1
   if (query.sort) {
@@ -68,6 +63,23 @@ export const getContentQuery = (event: CompatibilityEvent): QueryBuilderParams =
     if (reservedKeys.includes(key)) { continue }
     query.where = query.where || {}
     query.where[key] = query[key]
+  }
+
+  return refineQuery(query)
+}
+
+function refineQuery (query: QueryBuilderParams) {
+  // Add compatibility with old API
+  if (query.first) {
+    query.action = 'findOne'
+  }
+
+  if (query.where && !Array.isArray(query.where)) {
+    if (Object.keys(query.where).length > 0) {
+      query.where = [query.where]
+    } else {
+      delete query.where
+    }
   }
 
   return query
