@@ -1,8 +1,9 @@
 import { joinURL, withLeadingSlash, withoutTrailingSlash } from 'ufo'
 import { hash } from 'ohash'
-import { useCookie } from '#app'
+import { useRuntimeConfig, useCookie } from '#app'
 import { createQuery } from '../query/query'
 import type { ParsedContent, QueryBuilder, QueryBuilderParams } from '../types'
+import { encodeQueryParams } from '../utils/query'
 import { jsonStringify } from '../utils/json'
 import { addPrerenderPath, shouldUseClientDB, withContentBase } from './utils'
 
@@ -10,6 +11,7 @@ import { addPrerenderPath, shouldUseClientDB, withContentBase } from './utils'
  * Query fetcher
  */
 export const createQueryFetch = <T = ParsedContent>(path?: string) => async (query: QueryBuilder<T>) => {
+  const { content } = useRuntimeConfig().public
   if (path) {
     if (query.params().first && (query.params().where || []).length === 0) {
       // If query contains `path` and does not contain any `where` condition
@@ -24,9 +26,21 @@ export const createQueryFetch = <T = ParsedContent>(path?: string) => async (que
     query.sort({ _file: 1, $numeric: true })
   }
 
+  // Filter by locale if:
+  // - locales are defined
+  // - query doesn't already have a locale filter
+  if (content.locales.length) {
+    const queryLocale = query.params().where?.find(w => w._locale)?._locale
+    if (!queryLocale) {
+      query.locale(content.defaultLocale)
+    }
+  }
+
   const params = query.params()
 
-  const apiPath = withContentBase(process.dev ? '/query' : `/query/${hash(params)}.json`)
+  const apiPath = content.experimental.stripQueryParameters
+    ? withContentBase(`/query/${process.dev ? '_' : `${hash(params)}.${content.integrity}`}/${encodeQueryParams(params)}.json`)
+    : withContentBase(process.dev ? '/query' : `/query/${hash(params)}.${content.integrity}.json`)
 
   // Prefetch the query
   if (!process.dev && process.server) {
@@ -35,16 +49,18 @@ export const createQueryFetch = <T = ParsedContent>(path?: string) => async (que
 
   if (shouldUseClientDB()) {
     const db = await import('./client-db').then(m => m.useContentDatabase())
-    return db.fetch(query)
+    return db.fetch(query as QueryBuilder<ParsedContent>)
   }
 
   const data = await $fetch(apiPath as any, {
     method: 'GET',
     responseType: 'json',
-    params: {
-      _params: jsonStringify(params),
-      previewToken: useCookie('previewToken').value
-    }
+    params: content.experimental.stripQueryParameters
+      ? undefined
+      : {
+          _params: jsonStringify(params),
+          previewToken: useCookie('previewToken').value
+        }
   })
 
   // On SSG, all url are redirected to `404.html` when not found, so we need to check the content type

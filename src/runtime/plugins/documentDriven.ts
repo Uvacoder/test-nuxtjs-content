@@ -1,6 +1,7 @@
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 // @ts-ignore
 import { useRuntimeConfig, addRouteMiddleware, callWithNuxt, navigateTo } from '#app'
+import type { NuxtApp } from 'nuxt/app'
 import { withoutTrailingSlash, hasProtocol } from 'ufo'
 import { NavItem, ParsedContent } from '../types'
 // @ts-ignore
@@ -8,8 +9,8 @@ import { defineNuxtPlugin, queryContent, useContentHelpers, useContentState, fet
 // @ts-ignore
 import layouts from '#build/layouts'
 
-export default defineNuxtPlugin((nuxt) => {
-  const { documentDriven: moduleOptions, clientDB } = useRuntimeConfig()?.public?.content
+export default defineNuxtPlugin((nuxt: NuxtApp) => {
+  const { documentDriven: moduleOptions, experimental } = useRuntimeConfig()?.public?.content
 
   /**
    * Finds a layout value from a cascade of objects.
@@ -24,7 +25,7 @@ export default defineNuxtPlugin((nuxt) => {
     // Resolve key from navigation
     if (navigation && page) {
       const { navKeyFromPath } = useContentHelpers()
-      const layoutFromNav = navKeyFromPath(page._path, 'layout', navigation)
+      const layoutFromNav = navKeyFromPath(page._path!, 'layout', navigation)
       if (layoutFromNav) { return layoutFromNav }
     }
 
@@ -43,15 +44,16 @@ export default defineNuxtPlugin((nuxt) => {
     return 'default'
   }
 
-  const refresh = async (to: RouteLocationNormalized | RouteLocationNormalizedLoaded, force: boolean = false) => {
+  const refresh = async (to: RouteLocationNormalized | RouteLocationNormalizedLoaded, dedup = false) => {
+    // Call hook before fetching content
+    // @ts-ignore
+    nuxt.callHook('content:document-driven:start', { route: to, dedup })
+
     const routeConfig = (to.meta.documentDriven || {}) as any
     // Disabled document driven mode on next route
     if (to.meta.documentDriven === false) {
       return
     }
-
-    // Expose hook to be used for loading indicators
-    !force && nuxt.callHook('content:middleware:start')
 
     const { navigation, pages, globals, surrounds } = useContentState()
 
@@ -69,17 +71,14 @@ export default defineNuxtPlugin((nuxt) => {
       const navigationQuery = () => {
         const { navigation } = useContentState()
 
-        if (navigation.value && !force) { return navigation.value }
+        if (navigation.value && !dedup) { return navigation.value }
 
         return fetchContentNavigation()
           .then((_navigation) => {
             navigation.value = _navigation
             return _navigation
           })
-          .catch((_) => {
-            // eslint-disable-next-line no-console
-            // console.log('Could not fetch navigation!')
-          })
+          .catch(() => null)
       }
 
       promises.push(navigationQuery)
@@ -106,16 +105,13 @@ export default defineNuxtPlugin((nuxt) => {
           Object.entries(moduleOptions.globals).map(
             ([key, query]: [string, any]) => {
               // Avoid fetching same file twice
-              if (!force && globals.value[key]) { return globals.value[key] }
+              if (!dedup && globals.value[key]) { return globals.value[key] }
 
               // Supports `find` if passed as `query: 'find'` in the query definition.
               let type = 'findOne'
               if (query?.type) { type = query.type }
 
-              return queryContent(query)[type]().catch(() => {
-                // eslint-disable-next-line no-console
-                // console.log(`Could not find globals key: ${key}`)
-              })
+              return (queryContent(query) as any)[type]().catch(() => null)
             }
           )
         ).then(
@@ -152,17 +148,14 @@ export default defineNuxtPlugin((nuxt) => {
         const { pages } = useContentState()
 
         // Return same page as page is already loaded
-        if (!force && pages.value[_path] && pages.value[_path]._path === _path) {
+        if (!dedup && pages.value[_path] && pages.value[_path]._path === _path) {
           return pages.value[_path]
         }
 
         return queryContent()
           .where(where)
           .findOne()
-          .catch(() => {
-            // eslint-disable-next-line no-console
-            // console.log(`Could not find page: ${to.path}`)
-          })
+          .catch(() => null)
       }
 
       promises.push(pageQuery)
@@ -185,7 +178,7 @@ export default defineNuxtPlugin((nuxt) => {
         const { surrounds } = useContentState()
 
         // Return same surround as page is already loaded
-        if (!force && surrounds.value[_path]) {
+        if (!dedup && surrounds.value[_path]) {
           return surrounds.value[_path]
         }
 
@@ -197,10 +190,7 @@ export default defineNuxtPlugin((nuxt) => {
         // Exclude `body` for `surround`
           .without(['body'])
           .findSurround(surround)
-          .catch(() => {
-            // eslint-disable-next-line no-console
-            // console.log(`Could not find surrounding pages for: ${to.path}`)
-          })
+          .catch(() => null)
       }
 
       promises.push(surroundQuery)
@@ -247,6 +237,10 @@ export default defineNuxtPlugin((nuxt) => {
       if (_surround) {
         surrounds.value[_path] = _surround
       }
+
+      // Call hook after content is fetched
+      // @ts-ignore
+      await nuxt.callHook('content:document-driven:finish', { route: to, dedup, page: _page, navigation: _navigation, globals: _globals, surround: _surround })
     })
   }
 
@@ -255,7 +249,7 @@ export default defineNuxtPlugin((nuxt) => {
     // TODO: Remove this (https://github.com/nuxt/framework/pull/5274)
     if (to.path.includes('favicon.ico')) { return }
     // Avoid calling on hash change
-    if (process.client && !clientDB.isSPA && to.path === from.path) { return }
+    if (process.client && !experimental.clientDB && to.path === from.path) { return }
 
     const redirect = await refresh(to, false)
 

@@ -11,7 +11,6 @@ import {
 } from '@nuxt/kit'
 import { genImport, genSafeVariableName } from 'knitwork'
 import type { ListenOptions } from 'listhen'
-// eslint-disable-next-line import/no-named-as-default
 import defu from 'defu'
 import { hash } from 'ohash'
 import { join, relative } from 'pathe'
@@ -19,7 +18,7 @@ import type { Lang as ShikiLang, Theme as ShikiTheme } from 'shiki-es'
 import { listen } from 'listhen'
 import type { WatchEvent } from 'unstorage'
 import { createStorage } from 'unstorage'
-import { withTrailingSlash } from 'ufo'
+import { joinURL, withLeadingSlash, withTrailingSlash } from 'ufo'
 import { name, version } from '../package.json'
 import {
   CACHE_VERSION,
@@ -45,8 +44,17 @@ export interface ModuleOptions {
    * Base route that will be used for content api
    *
    * @default '_content'
+   * @deprecated Use `api.base` instead
    */
   base: string
+  api: {
+    /**
+     * Base route that will be used for content api
+     *
+     * @default '/api/_content'
+     */
+    baseURL: string
+  }
   /**
    * Disable content watcher and hot content reload.
    * Note: Watcher is a development feature and will not includes in the production.
@@ -207,6 +215,7 @@ export interface ModuleOptions {
   },
   experimental: {
     clientDB: boolean
+    stripQueryParameters: boolean
   }
 }
 
@@ -229,10 +238,17 @@ export default defineNuxtModule<ModuleOptions>({
     }
   },
   defaults: {
-    base: '_content',
+    // @deprecated
+    base: '',
+    api: {
+      baseURL: '/api/_content'
+    },
     watch: {
       ws: {
-        port: 4000,
+        port: {
+          port: 4000,
+          portRange: [4000, 4040]
+        },
         hostname: 'localhost',
         showURL: false
       }
@@ -259,12 +275,24 @@ export default defineNuxtModule<ModuleOptions>({
     },
     documentDriven: false,
     experimental: {
-      clientDB: false
+      clientDB: false,
+      stripQueryParameters: false
     }
   },
   async setup (options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
     const resolveRuntimeModule = (path: string) => resolveModule(path, { paths: resolve('./runtime') })
+    // Ensure default locale alway is the first item of locales
+    options.locales = Array.from(new Set([options.defaultLocale, ...options.locales].filter(Boolean))) as string[]
+
+    // Disable cache in dev mode
+    const buildIntegrity = nuxt.options.dev ? undefined : Date.now()
+
+    if (options.base) {
+      logger.warn('content.base is deprecated. Use content.api.baseURL instead.')
+      options.api.baseURL = withLeadingSlash(joinURL('api', options.base))
+    }
+
     const contentContext: ContentContext = {
       transformers: [],
       ...options
@@ -275,7 +303,7 @@ export default defineNuxtModule<ModuleOptions>({
       config.optimizeDeps = config.optimizeDeps || {}
       config.optimizeDeps.include = config.optimizeDeps.include || []
       config.optimizeDeps.include.push(
-        'html-tags'
+        'html-tags', 'slugify'
       )
     })
 
@@ -292,23 +320,30 @@ export default defineNuxtModule<ModuleOptions>({
       nitroConfig.handlers.push(
         {
           method: 'get',
-          route: `/api/${options.base}/query/:qid`,
+          route: `${options.api.baseURL}/query/:qid/**:params`,
           handler: resolveRuntimeModule('./server/api/query')
         },
         {
           method: 'get',
-          route: `/api/${options.base}/query`,
+          route: `${options.api.baseURL}/query/:qid`,
           handler: resolveRuntimeModule('./server/api/query')
         },
         {
           method: 'get',
-          route: `/api/${options.base}/cache.json`,
+          route: `${options.api.baseURL}/query`,
+          handler: resolveRuntimeModule('./server/api/query')
+        },
+        {
+          method: 'get',
+          route: nuxt.options.dev
+            ? `${options.api.baseURL}/cache.json`
+            : `${options.api.baseURL}/cache.${buildIntegrity}.json`,
           handler: resolveRuntimeModule('./server/api/cache')
         }
       )
 
       if (!nuxt.options.dev) {
-        nitroConfig.prerender.routes.unshift(`/api/${options.base}/cache.json`)
+        nitroConfig.prerender.routes.unshift(`${options.api.baseURL}/cache.${buildIntegrity}.json`)
       }
 
       // Register source storages
@@ -374,7 +409,6 @@ export default defineNuxtModule<ModuleOptions>({
       path: resolve('./runtime/components'),
       pathPrefix: false,
       prefix: '',
-      level: 999,
       global: true
     })
 
@@ -399,9 +433,6 @@ export default defineNuxtModule<ModuleOptions>({
       const globalComponents = resolve(srcDir, 'components/content')
       const dirStat = await fs.promises.stat(globalComponents).catch(() => null)
       if (dirStat && dirStat.isDirectory()) {
-        if (nuxt.options._layers.length === 1) {
-          logger.success('Using `~/components/content` for components in Markdown')
-        }
         nuxt.hook('components:dirs', (dirs) => {
           dirs.unshift({
             path: globalComponents,
@@ -410,14 +441,6 @@ export default defineNuxtModule<ModuleOptions>({
             prefix: ''
           })
         })
-      } else if (nuxt.options._layers.length === 1) {
-        const componentsDir = resolve(srcDir, 'components/')
-        const componentsDirStat = await fs.promises.stat(componentsDir).catch(() => null)
-        if (componentsDirStat && componentsDirStat.isDirectory()) {
-          // TODO: watch for file creation and tell Nuxt to restart
-          // Not possible for now since directories are hard-coded: https://github.com/nuxt/framework/blob/5b63ae8ad54eeb3cb49479da8f32eacc1a743ca0/packages/nuxi/src/commands/dev.ts#L94
-          logger.info('Please create `~/components/content` and restart the Nuxt server to use components in Markdown')
-        }
       }
     }
 
@@ -427,35 +450,25 @@ export default defineNuxtModule<ModuleOptions>({
 
       nuxt.hook('nitro:config', (nitroConfig) => {
         nitroConfig.handlers = nitroConfig.handlers || []
-        nitroConfig.handlers.push({
-          method: 'get',
-          route: `/api/${options.base}/navigation/:qid`,
-          handler: resolveRuntimeModule('./server/api/navigation')
-        })
-        nitroConfig.handlers.push({
-          method: 'get',
-          route: `/api/${options.base}/navigation`,
-          handler: resolveRuntimeModule('./server/api/navigation')
-        })
+        nitroConfig.handlers.push(
+          {
+            method: 'get',
+            route: `${options.api.baseURL}/navigation/:qid/**:params`,
+            handler: resolveRuntimeModule('./server/api/navigation')
+          }, {
+            method: 'get',
+            route: `${options.api.baseURL}/navigation/:qid`,
+            handler: resolveRuntimeModule('./server/api/navigation')
+          },
+          {
+            method: 'get',
+            route: `${options.api.baseURL}/navigation`,
+            handler: resolveRuntimeModule('./server/api/navigation')
+          }
+        )
       })
     } else {
       addImports({ name: 'navigationDisabled', as: 'fetchContentNavigation', from: resolveRuntimeModule('./composables/utils') })
-    }
-
-    // Register highlighter
-    if (options.highlight) {
-      contentContext.transformers.push(resolveRuntimeModule('./transformers/shiki'))
-      // @ts-ignore
-      contentContext.highlight.apiURL = `/api/${options.base}/highlight`
-
-      nuxt.hook('nitro:config', (nitroConfig) => {
-        nitroConfig.handlers = nitroConfig.handlers || []
-        nitroConfig.handlers.push({
-          method: 'post',
-          route: `/api/${options.base}/highlight`,
-          handler: resolveRuntimeModule('./server/api/highlight')
-        })
-      })
     }
 
     // Register document-driven
@@ -554,7 +567,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     contentContext.defaultLocale = contentContext.defaultLocale || contentContext.locales[0]
 
-    // Generate cache integerity based on content context
+    // Generate cache integrity based on content context
     const cacheIntegrity = hash({
       locales: options.locales,
       options: options.defaultLocale,
@@ -566,13 +579,17 @@ export default defineNuxtModule<ModuleOptions>({
     contentContext.markdown = processMarkdownOptions(contentContext.markdown)
 
     nuxt.options.runtimeConfig.public.content = defu(nuxt.options.runtimeConfig.public.content, {
-      clientDB: {
-        isSPA: options.experimental.clientDB && nuxt.options.ssr === false,
-        // Disable cache in dev mode
-        integrity: nuxt.options.dev ? undefined : Date.now()
+      locales: options.locales,
+      defaultLocale: contentContext.defaultLocale,
+      integrity: buildIntegrity,
+      experimental: {
+        stripQueryParameters: options.experimental.stripQueryParameters,
+        clientDB: options.experimental.clientDB && nuxt.options.ssr === false
+      },
+      api: {
+        baseURL: options.api.baseURL
       },
       navigation: contentContext.navigation as any,
-      base: options.base,
       // Tags will use in markdown renderer for component replacement
       tags: contentContext.markdown.tags as any,
       highlight: options.highlight as any,
@@ -672,13 +689,14 @@ export default defineNuxtModule<ModuleOptions>({
 })
 
 interface ModulePublicRuntimeConfig {
-  /**
-   * @experimental
-   */
-  clientDB: {
-    isSPA: boolean
-    integrity: number
+  experimental: {
+    stripQueryParameters: boolean
+    clientDB: boolean
   }
+
+  defaultLocale: ModuleOptions['defaultLocale']
+
+  locales: ModuleOptions['locales']
 
   tags: Record<string, string>
 

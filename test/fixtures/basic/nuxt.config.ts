@@ -1,4 +1,3 @@
-import { defineNuxtConfig } from 'nuxt'
 import { resolve } from 'pathe'
 import contentModule from '../../..'
 
@@ -24,7 +23,8 @@ export default defineNuxtConfig({
   },
   modules: [contentModule],
   content: {
-    locales: ['en', 'fa'],
+    locales: ['fa', 'en'],
+    defaultLocale: 'en',
     sources: [
       {
         name: 'fa-ir',

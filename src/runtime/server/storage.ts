@@ -2,7 +2,6 @@ import { prefixStorage } from 'unstorage'
 import { joinURL, withLeadingSlash, withoutTrailingSlash } from 'ufo'
 import { hash as ohash } from 'ohash'
 import type { H3Event } from 'h3'
-// eslint-disable-next-line import/no-named-as-default
 import defu from 'defu'
 import type { QueryBuilderParams, ParsedContent, QueryBuilder, ContentTransformer } from '../types'
 import { createQuery } from '../query/query'
@@ -11,7 +10,6 @@ import { transformContent } from '../transformers'
 import type { ModuleOptions } from '../../module'
 import { getPreview, isPreview } from './preview'
 import { getIndexedContentsList } from './content-index'
-// eslint-disable-next-line import/named
 // @ts-ignore
 import { useNitroApp, useRuntimeConfig, useStorage } from '#imports'
 // @ts-ignore
@@ -68,7 +66,7 @@ const contentIgnorePredicate = (key: string) => {
 }
 
 export const getContentsIds = async (event: H3Event, prefix?: string) => {
-  let keys = []
+  let keys: string[] = []
 
   if (isProduction) {
     keys = await cacheParsedStorage.getKeys(prefix)
@@ -199,6 +197,16 @@ export const createServerQueryFetch = <T = ParsedContent>(event: H3Event, path?:
   // Provide default sort order
   if (!query.params().sort?.length) {
     query.sort({ _file: 1, $numeric: true })
+  }
+
+  // Filter by locale if:
+  // - locales are defined
+  // - query doesn't already have a locale filter
+  if (contentConfig.locales.length) {
+    const queryLocale = query.params().where?.find(w => w._locale)?._locale
+    if (!queryLocale) {
+      query.locale(contentConfig.defaultLocale)
+    }
   }
 
   return createPipelineFetcher<T>(() => getIndexedContentsList<T>(event, query))(query)

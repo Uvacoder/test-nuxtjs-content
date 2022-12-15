@@ -179,5 +179,25 @@ export const testMarkdownParser = () => {
       expect(nodes.shift().props.href).toEqual('../../foo')
       expect(nodes.shift().props.href).toEqual('../../_foo')
     })
+
+    test('No trailing dashes in heading ids', async () => {
+      const headings = [
+        '# `<Alert />` ',
+        '## `<Alert />` -',
+        '### `<Alert />` \\#',
+        '### `<Alert />`.',
+        '### 🎨 Alert'
+      ]
+      for (const heading of headings) {
+        const parsed = await $fetch('/api/parse', {
+          method: 'POST',
+          body: {
+            id: 'content:index.md',
+            content: heading
+          }
+        })
+        expect(parsed.body.children[0].props.id).toEqual('alert')
+      }
+    })
   })
 }

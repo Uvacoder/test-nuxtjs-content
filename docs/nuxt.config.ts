@@ -52,11 +52,13 @@ export default defineNuxtConfig({
     prerender: {
       routes: [
         '/',
-        '/blog/announcing-v2'
+        '/blog/announcing-v2',
+        // TODO: move to github module
+        '/api/_github/releases/.json'
       ]
     }
   },
-  modules: ['@nuxtlabs/github-module'],
+  modules: ['@nuxtlabs/github-module', '@nuxthq/studio'],
   extends: process.env.DOCUS_THEME_PATH || '@nuxt-themes/docus',
   github: {
     owner: 'nuxt',
