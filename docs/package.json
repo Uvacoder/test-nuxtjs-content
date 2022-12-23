@@ -9,8 +9,8 @@
     "generate": "nuxi generate"
   },
   "devDependencies": {
-    "@nuxt-themes/docus": "^1.1.5",
-    "@nuxthq/studio": "^0.3.5",
+    "@nuxt-themes/docus": "^1.2.3",
+    "@nuxthq/studio": "^0.4.2",
     "@nuxtlabs/github-module": "^1.5.4",
     "monaco-editor-core": "^0.34.1",
     "nuxt": "v3.0.0",
