@@ -32,6 +32,7 @@
     "dev:fixtures": "./scripts/fixture.sh",
     "build": "nuxt-module-build && yarn build:web-types",
     "build:docs": "(cd docs && nuxi build)",
+    "start": "nuxt start",
     "build:web-types": "vue-docgen-web-types src/runtime/components/ ./dist/web-types.json",
     "example": "./scripts/example.sh",
     "lint": "eslint --ext .js,.ts,.vue .",
