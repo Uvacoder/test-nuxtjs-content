@@ -6,7 +6,7 @@
 [![Volta][volta-src]][volta-href]
 
 # Nuxt Content
-
+---
 Nuxt Content reads the `content/` directory in your project, parses `.md`, `.yml`, `.csv` or `.json` files and creates a powerful data layer for your application. Bonus, use Vue components in Markdown with the [MDC syntax](https://content.nuxtjs.org/guide/writing/mdc).
 
 - [📖 &nbsp;Read the documentation](https://content.nuxtjs.org)
