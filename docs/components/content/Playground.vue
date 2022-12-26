@@ -1,6 +1,6 @@
 <script setup>
 import { ref, useAsyncData, shallowRef, computed, onMounted, watch, useRoute } from '#imports'
-import { transformContent } from '../../../src/runtime/transformers'
+// import { transformContent } from '../../../src/runtime/transformers'
 
 const INITIAL_CODE = `---
 title: MDC
@@ -38,7 +38,7 @@ const content = ref(route.query.content || INITIAL_CODE)
 
 const { data: doc, refresh } = await useAsyncData('playground-' + content.value, async () => {
   try {
-    const parsed = await transformContent('content:index.md', content.value)
+    const parsed = content.value
     return parsed
   } catch (e) {
     return doc.value
