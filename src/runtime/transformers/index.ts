@@ -1,4 +1,4 @@
-import { extname } from 'pathe'
+// import { extname } from 'pathe'
 import { camelCase } from 'scule'
 import type { ContentTransformer, TransformContentOptions } from '../types'
 import csv from './csv'
@@ -41,7 +41,7 @@ export async function transformContent (id: string, content: string, options: Tr
   // Call hook before parsing the file
   const file = { _id: id, body: content }
 
-  const ext = extname(id)
+  // const ext = extname(id)
   const parser = getParser(ext, transformers)
   if (!parser) {
     // eslint-disable-next-line no-console
