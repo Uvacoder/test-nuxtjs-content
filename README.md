@@ -1,3 +1,7 @@
+    "./transformers": "./dist/runtime/transformers/index.mjs",
+    "./transformers/*": "./dist/runtime/transformers/*.mjs"
+  },
+
 [![nuxt-content](https://user-images.githubusercontent.com/904724/195312457-e43879c3-f1cc-4b95-9531-e54582aaff47.png "@nuxt/content cover")](https://content.nuxtjs.org)
 
 [![npm version][npm-version-src]][npm-version-href]
