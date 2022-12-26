@@ -1,5 +1,5 @@
 // import { extname } from 'pathe'
-import { camelCase } from 'scule'
+// import { camelCase } from 'scule'
 import type { ContentTransformer, TransformContentOptions } from '../types'
 import csv from './csv'
 import markdown from './markdown'
@@ -49,14 +49,14 @@ export async function transformContent (id: string, content: string, options: Tr
     return file
   }
 
-  const parserOptions = options[camelCase(parser.name)] || {}
+  // const parserOptions = options[camelCase(parser.name)] || {}
   const parsed = await parser.parse!(file._id, file.body, parserOptions)
 
   const matchedTransformers = getTransformers(ext, transformers)
   const result = await matchedTransformers.reduce(async (prev, cur) => {
     const next = (await prev) || parsed
 
-    const transformOptions = options[camelCase(cur.name)]
+   // const transformOptions = options[camelCase(cur.name)]
 
     // disable transformer if options is false
     if (transformOptions === false) {
